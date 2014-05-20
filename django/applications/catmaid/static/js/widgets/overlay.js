@@ -1042,8 +1042,6 @@ SkeletonAnnotations.SVGOverlay.prototype.createInterpolatedNodeFn = function () 
         x: q.phys_x,
         y: q.phys_y,
         z: q.phys_z,
-        resx: stack.resolution.x,
-        resy: stack.resolution.y,
         resz: stack.resolution.z,
         stack_translation_z: stack.translation.z,
         stack_id: project.focusedStack.id
