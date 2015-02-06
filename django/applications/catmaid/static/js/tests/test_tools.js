@@ -123,4 +123,16 @@ QUnit.test('Utilities test', function( assert ) {
   };
   assert.deepEqual(CATMAID.tools.deepCopy(o1), o1,
       "CATMAID.tools.deepEqual can copy nested objects");
+
+
+  // Test Z plane intersection function
+  var i1 = CATMAID.tools.intersectLineWithZPlane(-1, 1, 1, 1, 2, 3, 0);
+  assert.deepEqual(i1, [-2, 0.5],
+      "CATMAID.tools.intersectLineWithZPlane finds intersection with " +
+      "proper values");
+
+  var i2 = CATMAID.tools.intersectLineWithZPlane(0, 0, 0, 0, 0, 0, 0);
+  assert.deepEqual(i2, [NaN, NaN],
+      "CATMAID.tools.intersectLineWithZPlane fails to find intersection " +
+      "if all values are the same");
 });
