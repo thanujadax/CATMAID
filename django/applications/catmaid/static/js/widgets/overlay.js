@@ -2174,7 +2174,8 @@ SkeletonAnnotations.SVGOverlay.prototype.printTreenodeInfo = function(nodeID, pr
     prefixMessage = "Node " + nodeID;
   }
   statusBar.replaceLast(prefixMessage + " (loading authorship information)");
-  this.submit(
+  this.executeDependentOnExistence(nodeID,
+    this.submit.bind(this,
       django_url + project.id + '/node/user-info',
       {treenode_id: nodeID},
       function(jso) {
@@ -2198,7 +2199,11 @@ SkeletonAnnotations.SVGOverlay.prototype.printTreenodeInfo = function(nodeID, pr
         statusBar.replaceLast(msg);
       },
       false,
-      true);
+      true),
+    function() {
+      statusBar.replaceLast("Virtual node, modify to instantiate");
+    }
+  );
 };
 
 /** @param e The mouse event, to read out whether shift is down. */
