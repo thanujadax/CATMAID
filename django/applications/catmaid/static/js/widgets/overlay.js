@@ -486,6 +486,8 @@ SkeletonAnnotations.SVGOverlay.prototype.promiseNode = function(node)
         // Update nodes
         self.nodes[nid] = self.nodes[node.id];
         delete self.nodes[node.id];
+        // Update node reference, passed in
+        node.id = nid;
 
         // Update child node to refer to new node as parent
         requestQueue.register(
@@ -1489,28 +1491,31 @@ SkeletonAnnotations.SVGOverlay.prototype.createInterpolatedNodeFn = function () 
 
   // Function to request interpolated nodes
   var requester = function(parent_id, q) {
-    var stack = q.self.getStack();
-    // Creates treenodes from atn to new node in each z section
-    var post = {
-        pid: project.id,
-        x: q.phys_x,
-        y: q.phys_y,
-        z: q.phys_z,
-        resz: stack.resolution.z,
-        stack_translation_z: stack.translation.z,
-        stack_id: project.focusedStack.id
-    };
-    var url;
-    if (q.nearestnode_id) {
-      url = '/skeleton/join_interpolated';
-      post.from_id = parent_id;
-      post.to_id = q.nearestnode_id;
-      post.annotation_set = q.annotation_set;
-    } else {
-      url = '/treenode/create/interpolated';
-      post.parent_id = parent_id;
-    }
-    requestQueue.register(django_url + project.id + url, "POST", post, handler);
+    // Make sure the parent node is not virtual anymore, when called
+    q.self.promiseNode(q.self.nodes[parent_id]).then(function(parent_id) {
+      var stack = q.self.getStack();
+      // Creates treenodes from atn to new node in each z section
+      var post = {
+          pid: project.id,
+          x: q.phys_x,
+          y: q.phys_y,
+          z: q.phys_z,
+          resz: stack.resolution.z,
+          stack_translation_z: stack.translation.z,
+          stack_id: project.focusedStack.id
+      };
+      var url;
+      if (q.nearestnode_id) {
+        url = '/skeleton/join_interpolated';
+        post.from_id = parent_id;
+        post.to_id = q.nearestnode_id;
+        post.annotation_set = q.annotation_set;
+      } else {
+        url = '/treenode/create/interpolated';
+        post.parent_id = parent_id;
+      }
+      requestQueue.register(django_url + project.id + url, "POST", post, handler);
+    });
   };
 
   return function (phys_x, phys_y, phys_z, nearestnode_id, annotation_set) {
@@ -2565,7 +2570,9 @@ SkeletonAnnotations.SVGOverlay.prototype.createInterpolatedTreenode = function(e
   var atn = SkeletonAnnotations.atn;
   if (this.coords.lastX !== null && this.coords.lastY !== null) {
     // Radius of 7 pixels, in physical coordinates
-    var nearestnode = this.findNodeWithinRadius(this.coords.lastX, this.coords.lastY, 7);
+    var respectVirtualNodes = true;
+    var nearestnode = this.findNodeWithinRadius(this.coords.lastX,
+       this.coords.lastY, 7, respectVirtualNodes);
 
     if (nearestnode !== null) {
       if (e && e.shiftKey) {
@@ -2585,12 +2592,15 @@ SkeletonAnnotations.SVGOverlay.prototype.createInterpolatedTreenode = function(e
           self.executeIfSkeletonEditable(nearestnode_skid, function() {
             // The function used to instruct the backend to do the merge
             var merge = function(annotations) {
-              var phys_z = self.pix2physZ(stack.z, self.coords.lastY, self.coords.lastX);
-              var phys_y = self.pix2physY(stack.z, self.coords.lastY, self.coords.lastX);
-              var phys_x = self.pix2physX(stack.z, self.coords.lastY, self.coords.lastX);
-              // Ask to join the two skeletons with interpolated nodes
-              self.createTreenodeLinkInterpolated(phys_x, phys_y, phys_z,
+              var phys_z = self.pix2physZ(self.stack.z, self.coords.lastY, self.coords.lastX);
+              var phys_y = self.pix2physY(self.stack.z, self.coords.lastY, self.coords.lastX);
+              var phys_x = self.pix2physX(self.stack.z, self.coords.lastY, self.coords.lastX);
+              // Ask to join the two skeletons with interpolated nodes. Make
+              // sure the nearest node is not virtual.
+              self.promiseNode(self.nodes[nearestnode_skid]).then(function(nearestnode_id) {
+                self.createTreenodeLinkInterpolated(phys_x, phys_y, phys_z,
                   nearestnode_id, annotations);
+              });
             };
 
             // A method to use when the to-skeleton has multiple nodes
@@ -2651,10 +2661,14 @@ SkeletonAnnotations.SVGOverlay.prototype.createInterpolatedTreenode = function(e
             /* If the to-node contains more than one node, show the dialog.
              * Otherwise, check if the to-node contains annotations. If so, show
              * the dialog. Otherwise, merge it right away and keep the
-             * from-annotations.
+             * from-annotations. Anyway, it has to be made sure that the nearest
+             * node exists.
              */
-            self.executeDependentOnNodeCount(nearestnode.id, merge_single_node,
-                merge_multiple_nodes);
+            self.promiseNode(nearestnode).then(function(nnid) {
+              nearestnode_id = nnid;
+              self.executeDependentOnNodeCount(nnid, merge_single_node,
+                  merge_multiple_nodes);
+            });
           });
         });
         return;
