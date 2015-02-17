@@ -1543,8 +1543,11 @@ SkeletonAnnotations.SVGOverlay.prototype.createNode = function (parentID, phys_x
         SkeletonAnnotations.trigger(
               SkeletonAnnotations.EVENT_SKELETON_CHANGED, skid);
 
-        // The parent will be null if there isn't one or if the parent Node object is not within the set of retrieved nodes, but the parentID will be defined.
-        var nn = self.graphics.newNode(nid, self.nodes[parentID], parentID, radius, pos_x, pos_y, pos_z, 0, 5 /* confidence */, skid, true);
+        // The parent will be null if there isn't one or if the parent Node
+        // object is not within the set of retrieved nodes, but the parentID
+        // will be defined.
+        var nn = self.graphics.newNode(nid, self.nodes[parentID], parentID,
+            radius, pos_x, pos_y, pos_z, 0, 5 /* confidence */, skid, true);
 
         self.nodes[nid] = nn;
         nn.createGraphics();
@@ -2796,12 +2799,19 @@ SkeletonAnnotations.SVGOverlay.prototype.deleteNode = function(nodeId) {
   return true;
 };
 
-// Now that functions exist:
-SkeletonAnnotations.SVGOverlay.prototype.createInterpolatedNode = SkeletonAnnotations.SVGOverlay.prototype.createInterpolatedNodeFn();
+/**
+ * Interpolate and join, both: uses same function as createInterpolatedNode so
+ * that requests are queued in the same queue.
+ */
+SkeletonAnnotations.SVGOverlay.prototype.createInterpolatedNode =
+  SkeletonAnnotations.SVGOverlay.prototype.createInterpolatedNodeFn();
 
-/** Interpolate and join, both: uses same function as createInterpolatedNode
- *  so that requests are queued in the same queue. */
-SkeletonAnnotations.SVGOverlay.prototype.createTreenodeLinkInterpolated = SkeletonAnnotations.SVGOverlay.prototype.createInterpolatedNode;
+/**
+ * Interpolate and join, both: uses same function as createInterpolatedNode so
+ * that requests are queued in the same queue.
+ */
+SkeletonAnnotations.SVGOverlay.prototype.createTreenodeLinkInterpolated =
+  SkeletonAnnotations.SVGOverlay.prototype.createInterpolatedNode;
 
 
 //////
