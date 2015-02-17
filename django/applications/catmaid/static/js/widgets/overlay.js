@@ -1420,7 +1420,7 @@ SkeletonAnnotations.SVGOverlay.prototype.createInterpolatedNodeFn = function () 
     if (text && text !== " ") {
       var json = $.parseJSON(text);
       if (json.error) {
-        alert(json.error);
+        CATMAID.error(json.error);
         queue.length = 0; // reset
       } else {
         // Check if any calls have accumulated
@@ -1448,8 +1448,8 @@ SkeletonAnnotations.SVGOverlay.prototype.createInterpolatedNodeFn = function () 
               if (retries > 0) {
                 handleLastRequest(q, retries - 1);
               } else {
-                new CATMAID.ErrorDialog("A required update of the node " +
-                    "failed. Please reload CATMAID.").show();
+                CATMAID.error("A required update of the node failed. Please" +
+                    "reload CATMAID.");
               }
             };
             // Start a new continuation to update the nodes,
