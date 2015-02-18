@@ -113,7 +113,7 @@ var submitterFn = function() {
 
     if (q.url) {
       if (q.replace) {
-        requestQueue.replace(q.url, "POST", q.post, handlerFn(q), q.url);
+        requestQueue.replace(q.url, "POST", q.post, handlerFn(q), q.id);
       } else {
         requestQueue.register(q.url, "POST", q.post, handlerFn(q));
       }
@@ -123,14 +123,15 @@ var submitterFn = function() {
     }
   };
 
-  return function(url, post, fn, blockUI, replace, errCallback, quiet) {
+  return function(url, post, fn, blockUI, replace, errCallback, quiet, id) {
     queue.push({url: url,
           post: post,
           fn: fn,
           blockUI: blockUI,
           replace: replace,
           errCallback: errCallback,
-          quiet: quiet});
+          quiet: quiet,
+          id: id || url});
     // Invoke if the queue contains only the new entry
     if (1 === queue.length) {
       next();
